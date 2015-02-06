@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import sys
+import re
+from jbosslogutils import *
+
+from logging import *
+logger = getLogger(__name__)
+handler = StreamHandler()
+formatter = Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+#logger.setLevel(DEBUG) # uncomment this line if you need debug output
+
+def help():
+    print "Usage: " + __file__ +" <pattern> <file>",
+    sys.exit(0)
+
+if __name__ == '__main__':
+
+    # detect whether sys.stdout is attached to terminal
+    output_to_tty = sys.stdout.isatty()
+    logger.debug("Is it attached to terminal?: " + RED_BACKGROUND + WHITE + "%s" % output_to_tty + CLEAR)
+    
+    # TODO:
+    # parse command line with the standard python option-parser
+    filename = None
+    patternstring = None
+    try:
+        patternstring = '.*' + sys.argv[1] + '.*'
+    except IndexError:
+        logger.error("pattern is missing")
+        help()
+    try:
+        filename = sys.argv[2]
+    except IndexError:
+        logger.error("file is missing")
+        help()
+
+    log = jbosslog(filename=filename)
+
+    pattern = re.compile(patternstring)
+    
+    while(log.hasnext()):
+        next = log.next()
+        if(next.match(patternstring)):
+            print next.highlight
+# eof

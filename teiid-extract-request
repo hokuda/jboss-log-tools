@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import sys
+import re
+from jbosslogutils import *
+
+from logging import *
+logger = getLogger(__name__)
+handler = StreamHandler()
+formatter = Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+#logger.setLevel(DEBUG) # uncomment this line if you need debug output
+
+def help():
+    print "Usage: " + __file__ + " <reqid> <file>",
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    if __file__ == "./test":
+        import doctest
+        doctest.testmod()
+        sys.exit(0)
+
+    reqid = None
+    filename = None
+    try:
+        reqid =  re.escape(sys.argv[1])
+        logger.debug("reqid=" + reqid)
+    except IndexError:
+        logger.error("reqid is missing")
+        help()
+    try:
+        filename = sys.argv[2]
+    except IndexError:
+        logger.error("file is missing")
+        help()
+
+    log = jbosslog(filename=filename)
+
+    requestID_pattern = re.compile(r".*(\(.*\)).*[\s=]" + reqid + r"[\s;].*")
+    start_pattern = re.compile(".*START USER COMMAND.*")
+    end_pattern = re.compile(".*END USER COMMAND.*")
+
+    threads = []
+    num = 0
+    start_position = 0
+    end_position = 0
+
+    while(log.hasnext()):
+        position = log.position()
+        next = log.next()
+        m = requestID_pattern.match(next.string)
+        if (not m == None):
+            thread = m.group(1)
+            if (thread not in threads):
+                threads.append(thread)
+                logger.debug("threads=" + ' '.join(threads))
+            m = start_pattern.match(next.string)
+            if (not m == None):
+                print next.string,
+                start_position = position
+            m = end_pattern.match(next.string)
+            if (not m == None):
+                print next.string,
+                end_position = log.position()
+        
+    log.seek(start_position) # rewind to "START USER COMMAND"
+    
+    while(log.hasnext() and end_position > log.position()):
+        next = log.next()
+        for t in threads:
+            p = re.compile(t)
+            m = p.search(next.string)
+            if (not m == None):
+                print next.string,
+                break
