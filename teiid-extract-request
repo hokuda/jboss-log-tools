@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     requestID_pattern = re.compile(r".*(\(.*\)).*[\s=]" + reqid + r"[\s;].*")
     start_pattern = re.compile(".*START USER COMMAND.*")
-    end_pattern = re.compile(".*END USER COMMAND.*")
+    end_pattern = re.compile(".*(END|ERROR) USER COMMAND.*")
 
     threads = []
     num = 0
@@ -52,7 +52,8 @@ if __name__ == "__main__":
     while(log.hasnext()):
         position = log.position()
         next = log.next()
-        m = requestID_pattern.match(next.string)
+        #m = requestID_pattern.match(next.string)
+        m = requestID_pattern.match(next.string[:4096])
         if (not m == None):
             thread = m.group(1)
             if (thread not in threads):

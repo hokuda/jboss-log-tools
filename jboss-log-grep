@@ -45,5 +45,7 @@ if __name__ == '__main__':
     while(log.hasnext()):
         next = log.next()
         if(next.match(patternstring)):
-            print next.highlight
+            #print next.highlight
+            print next.string,
+            
 # eof

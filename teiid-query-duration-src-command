@@ -1,0 +1,126 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import sys
+import re
+import datetime
+from jbosslogutils import *
+
+from logging import *
+logger = getLogger(__name__)
+handler = StreamHandler()
+formatter = Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+#logger.setLevel(DEBUG) # uncomment this line if you need debug output
+
+#start_user_command_pattern = re.compile(r".+START USER COMMAND:.+startTime=(\S+ \S+)\s+requestID=(\S+)\s+.*sql=([.\n]+)")
+#start_user_command_pattern = re.compile(r".+START USER COMMAND:.+startTime=(\S+ \S+)\s+requestID=(\S+)\s+.*sql=(.+)", re.DOTALL)
+start_user_command_pattern = re.compile(r".+START DATA SRC COMMAND:.+startTime=(\S+ \S+)\s+requestID=(\S+)\s+sourceCommandID=(\S+)\s+.*sql=(.+)", re.DOTALL)
+
+def parse_start_user_command(entry):
+    """
+    parse log entry which includes "START USER COMMAND" and return date+time, request ID, and SQL
+
+    >>> import jbosslogutils
+    >>> entry = jbosslogentry("16:46:08,501 DEBUG [org.teiid.COMMAND_LOG] (New I/O worker #6)  START USER COMMAND:     startTime=2014-11-20 16:46:08.501       requestID=CYpbNi6727D+.0       txID=null       sessionID=CYpbNi6727D+  applicationName=JDBC    principal=user@teiid-security   vdbName=test  vdbVersion=1     sql=SELECT\\n"
+    ... + "    *\\n"
+    ... + "    FROM vvv.USERS\\n"
+    ... )
+    >>> (start, reqid, sql) = parse_start_user_command(entry)
+    >>> print start
+    2014-11-20 16:46:08.501000
+    >>> print reqid
+    CYpbNi6727D+.0
+    >>> print sql
+    SELECT
+        *
+        FROM vvv.USERS
+    <BLANKLINE>
+    """
+
+    match = start_user_command_pattern.match(entry.string)
+    if match == None:
+        return None, None, None, None
+    time = match.group(1)
+    reqid = match.group(2)
+    srccmdid = match.group(3)
+    sql = match.group(4)
+    dt = datetime.datetime.strptime(time, '%Y-%m-%d %H:%M:%S.%f')
+    logger.debug("start dt=" + dt.strftime('%Y-%m-%d %H:%M:%S.%f'))
+    return dt, reqid, srccmdid, sql
+
+def parse_end_user_command(entry, reqid, srccmdid):
+    start_user_command_pattern = re.compile(r".+END SRC COMMAND:.+endTime=(\S+ \S+)\s+requestID=" + reqid + "\s+sourceCommandID=" + srccmdid + "\s")
+    match = start_user_command_pattern.match(entry.string)
+    if match == None:
+        return None
+    time = match.group(1)
+    #print "end time=" + time
+    dt = datetime.datetime.strptime(time, '%Y-%m-%d %H:%M:%S.%f')
+    #print "end dt=" + dt.strftime('%Y-%m-%d %H:%M:%S.%f')
+    return dt
+
+def help():
+    print "Usage: " + __file__ +" <threshold> <file>",
+    sys.exit(0)
+
+if __name__ == "__main__":
+    if __file__ == "./test":
+        import doctest
+        doctest.testmod()
+        sys.exit(0)
+        
+    threshold = 0
+    show_not_found = False
+    filename = None
+    threshold = 0
+
+    try:
+        threshold =  abs(int(sys.argv[1]))
+        show_not_found = (int(sys.argv[1])<0)
+    except IndexError:
+        logger.error("threshold is missing")
+        help()
+    try:
+        filename = sys.argv[2]
+    except IndexError:
+        logger.error("file is missing")
+        help()
+
+    log1 = jbosslog(filename=filename)
+
+    while(log1.hasnext()):
+        next1 = log1.next()
+        start, reqid, srccmdid, sql = parse_start_user_command(next1)
+        if start == None:
+            continue
+        logger.debug("start start=" + start.strftime('%Y-%m-%d %H:%M:%S.%f'))
+        end = None
+        log2 = jbosslog(filename=filename)
+        while(log2.hasnext()):
+            next2 = log2.next()
+            end = parse_end_user_command(next2, reqid, srccmdid)
+            if end != None:
+                break
+        log2.close()
+        if(end == None):
+            #if (not show_not_found):
+                #pass
+            print >> sys.stderr, ">>> Not found endTime"
+            print >> sys.stderr, "request ID = " + reqid
+            print >> sys.stderr, "source command ID = " + srccmdid
+            print >> sys.stderr, "sql        = " + sql,
+            print >> sys.stderr, "start time = " + start.strftime('%Y-%m-%d %H:%M:%S.%f')
+            print >> sys.stderr, ""
+        else:
+            duration = end - start
+            if duration.total_seconds() < threshold:
+                continue
+            print ">>> duration in second = " + str(duration.total_seconds())
+            print "request ID = " + reqid
+            print "source command ID = " + srccmdid
+            print "sql        = " + sql,
+            print "start time = " + start.strftime('%Y-%m-%d %H:%M:%S.%f')
+            print "end time   = " + end.strftime('%Y-%m-%d %H:%M:%S.%f')
+            print
