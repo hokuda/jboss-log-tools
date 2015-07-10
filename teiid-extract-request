@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     requestID_pattern = re.compile(r".*(\(.*\)).*[\s=]" + reqid + r"[\s;].*")
     start_pattern = re.compile(".*START USER COMMAND.*")
-    end_pattern = re.compile(".*(END|ERROR) USER COMMAND.*")
+    end_pattern = re.compile(".*(END|ERROR|CANCEL) USER COMMAND.*")
 
     threads = []
     num = 0
