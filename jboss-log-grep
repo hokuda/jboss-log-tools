@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""A command utility for grepping jboss server.log"""
+
 import sys
 import re
 from jbosslogutils import *

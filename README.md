@@ -1,8 +1,31 @@
+* install
+
+        $ git clone https://github.com/hokuda/jboss-log-tools.git
+        $ cd jboss-log-tools
+        $ git clone https://github.com/splunk/splunk-sdk-python.git
+
+* start server
+
+        $ su -
+        # cd /usr/local/splunk/bin
+        # ./splunk start
+
+* run
+
+        $ python search_mystudy.py "s" --output_mode=csv
+
+
+
+
+-----------
+
 # jboss-log-tools
 
 Tools for analysing JBoss AS/EAP log files.
 
 ##jboss-log-grep
+
+A command utility for grepping jboss server.log
 
 Usage:
 
@@ -20,13 +43,29 @@ Example:
 
 ##teiid-query-duration
 
+A command line utility for timing user command query and data source comand query
+
 Usage:
 
-        $ teiid-query-duration <threshold> <file>
+        teiid-query-duration [-h] [--threshold <sec>] [--src-command]
+                            [--splunk | --local <file>]
+
+Optional arguments:
+
+        -h, --help            show this help message and exit
+        --threshold <sec>, -t <sec>
+                              Threshold of duration to be shown in second.
+        --src-command, -s     Show src command duration.
+        --splunk              Use splunk to feed log.
+        --local-file <file>, -f <file>
+                              Feed local log file. If neither --local-file and
+                              --splunk is not specified, teiid-query-duration feeds
+                              log from stdin.
+
 
 Example:
 
-        [hokuda@localhost jboss-log-tools]$ ./teiid-query-duration 0 server.log 
+        [hokuda@localhost jboss-log-tools]$ ./teiid-query-duration --threshold 0 --local server.log 
         >>> duration in second = 0.047
         request ID = j5nPRpxMHbWt.0
         sql        = /*+ cache */ SELECT * FROM vvv.USERS
@@ -40,6 +79,8 @@ Example:
         end time   = 2014-11-20 17:01:28.409000
 
 ##teiid-extract-request
+
+A command utility for extracting log messages for a specific request command
 
 Usage:
 
@@ -57,4 +98,27 @@ Example:
 
 ##Installation
 
-Copy jboss-log-grep, jbosslogutils.py, teiid-extract-request, and teiid-query-duration to your bin directory.
+1. git clone this repo.
+
+        git clone https://github.com/hokuda/jboss-log-tools.git
+
+2. change directory.
+
+        cd jboss-log-tools
+
+3. (optional) git clone Splunk SDK.
+
+        git clone https://github.com/splunk/splunk-sdk-python.git
+
+4. copy the files to your bin directory
+
+        cp -r * /path/to/your/bin/
+
+
+###Splunk integration
+
+The [teiid-query-duration](#teiid-query-duration) command can feed log stored in Splunk server. To enable Splunk integration feature, you need:
+
+1. Install Splunk SDK (See [Installation](#installation))
+
+2. Create ~/.splunkrc referring [.splunkrc](https://github.com/splunk/splunk-sdk-python#splunkrc)
