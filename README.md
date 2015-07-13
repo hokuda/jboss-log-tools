@@ -1,18 +1,18 @@
 * install
 
-    $ git clone https://github.com/hokuda/jboss-log-tools.git
-    $ cd jboss-log-tools
-    $ git clone https://github.com/splunk/splunk-sdk-python.git
+        $ git clone https://github.com/hokuda/jboss-log-tools.git
+        $ cd jboss-log-tools
+        $ git clone https://github.com/splunk/splunk-sdk-python.git
 
 * start server
 
-    $ su -
-    # cd /usr/local/splunk/bin
-    # ./splunk start
+        $ su -
+        # cd /usr/local/splunk/bin
+        # ./splunk start
 
 * run
 
-    $ python search_mystudy.py "s" --output_mode=csv
+        $ python search_mystudy.py "s" --output_mode=csv
 
 
 
