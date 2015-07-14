@@ -1,10 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import argparse
 import sys
 import re
 import datetime
-from jbosslogutils import *
+from jbosslog import jbosslog
 
 from logging import *
 logger = getLogger(__name__)
@@ -59,34 +60,39 @@ def parse_end_user_command(entry, reqid):
     #print "end dt=" + dt.strftime('%Y-%m-%d %H:%M:%S.%f')
     return dt
 
-def help():
-    print "Usage: " + __file__ +" <threshold> <file>",
-    sys.exit(0)
+def parse_opts():
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('--threshold', '-t', metavar='<sec>',
+                        help='Threshold of duration in second', type=int,
+                        default=0)
+    # exclusive input stream options
+    exclusive = parser.add_mutually_exclusive_group()
+    exclusive.add_argument('--splunk', action='store_true',
+                           help='Use splunk to feed log')
+    exclusive.add_argument('--local', metavar='<file>',
+                           #type=argparse.FileType('r'),
+                           help='Feed local log file')
+    opts = parser.parse_args(sys.argv[1:])
+    print opts
+    return opts
+    
 
 if __name__ == "__main__":
+    opts = parse_opts()
     if __file__ == "./test":
         import doctest
         doctest.testmod()
         sys.exit(0)
         
-    threshold = 0
-    show_not_found = False
-    filename = None
-    threshold = 0
+    threshold = opts.threshold
+    show_ongoing_query = threshold < 0
 
-    try:
-        threshold =  abs(int(sys.argv[1]))
-        show_not_found = (int(sys.argv[1])<0)
-    except IndexError:
-        logger.error("threshold is missing")
-        help()
-    try:
-        filename = sys.argv[2]
-    except IndexError:
-        logger.error("file is missing")
-        help()
-
-    log1 = jbosslog(filename=filename)
+    log1 = None
+    if opts.splunk:
+        from jbosssplunklib import splunkstream
+        log1 = jbosslog(stream=splunkstream())
+    else:
+        log1 = jbosslog(stream=open(opts.local,'r'))
 
     while(log1.hasnext()):
         next1 = log1.next()
@@ -95,7 +101,11 @@ if __name__ == "__main__":
             continue
         logger.debug("start start=" + start.strftime('%Y-%m-%d %H:%M:%S.%f'))
         end = None
-        log2 = jbosslog(filename=filename)
+        log2 = None
+        if opts.splunk:
+            log2 = jbosslog(stream=splunkstream())
+        else:
+            log2 = jbosslog(stream=open(opts.local,'r'))
         while(log2.hasnext()):
             next2 = log2.next()
             end = parse_end_user_command(next2, reqid)

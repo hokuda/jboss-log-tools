@@ -15,54 +15,54 @@ JBOSS_DEFAULT_BOUNDARY = r"(201[0-9]-[01][0-9]-[0123][0-9] )?[0-9][0-9]:[0-9][0-
 
 class jbosslog:
 
-    def __init__(self, filename=None, boundary=JBOSS_DEFAULT_BOUNDARY):
+    def __init__(self, stream=None, boundary=JBOSS_DEFAULT_BOUNDARY):
         """
         Open and instantiate jboss server.log.
-        The first argument `filename` of the constructor is a filename.
+        The first argument `stream` of the constructor is a stream.
         The second `boundary` is a boundary to separate log entries. It should be a python regex.
         If you do not specify `boundary`, the default boundary is used. It is suitable for default log format.
         If you use your own custom log format, you need to specify a python regex for a boundary.
 
-        >>> log = jbosslog(filename="test/server.log")
-        >>> print log.filename
+        >>> log = jbosslog(stream="test/server.log")
+        >>> print log.stream
         test/server.log
         >>> print log.boundary
         (201[0-9]-[01][0-9]-[0123][0-9] )?[0-9][0-9]:[0-9][0-9]:[0-9][0-9],[0-9][0-9][0-9] [A-Z]+[\s]+\[.*\] \(.*\) .*
         >>> log.close()
 
-        >>> log = jbosslog(filename="test/server.log", boundary=r"2015-01-05 .* test regex")
-        >>> print log.filename
+        >>> log = jbosslog(stream="test/server.log", boundary=r"2015-01-05 .* test regex")
+        >>> print log.stream
         test/server.log
         >>> print log.boundary
         2015-01-05 .* test regex
         >>> log.close()
 
-        If filename or boundary is None, it throws an exception.
+        If stream or boundary is None, it throws an exception.
 
-        >>> #log = jbosslog(filename=None, boundary=r"2015-01-05 .* test regex")
+        >>> #log = jbosslog(stream=None, boundary=r"2015-01-05 .* test regex")
         """
-        if filename == None:
-            raise Exception("jbossutils: filename is None")
+        if stream == None:
+            raise Exception("jbossutils: stream is None")
         if boundary == None:
             raise Exception("jbossutils: boundary is None")
-        self._filename = filename
-        self._fh = open(filename, 'r')
-        self._position = self._fh.tell()
-        self._lastread = self._fh.readline()
+        self._stream = stream
+        #self._filename = open(filenname, 'r')
+        self._position = self._stream.tell()
+        self._lastread = self._stream.readline()
         self._boundary = boundary
         self._pattern = re.compile(self._boundary)
         
     @property
-    def filename(self):
+    def stream(self):
         return None
 
-    @filename.getter
-    def filename(self):
-        return self._filename
+    @stream.getter
+    def stream(self):
+        return self._stream
 
-    @filename.setter
-    def filename(self, filename):
-        self._filename = filename
+    @stream.setter
+    def stream(self, stream):
+        self._stream = stream
 
     @property
     def boundary(self):
@@ -81,9 +81,9 @@ class jbosslog:
         return self._position
 
     def seek(self, offset):
-        self._fh.seek(offset,0)
-        self._lastread = self._fh.readline()
-        self._position = self._fh.tell()
+        self._stream.seek(offset,0)
+        self._lastread = self._stream.readline()
+        self._position = self._stream.tell()
 
     def match(self, line):
         if (line == None):
@@ -101,22 +101,22 @@ class jbosslog:
             return True
 
     def next(self):
-        self._position = self._fh.tell() # ここまで読んだ
+        self._position = self._stream.tell() # ここまで読んだ
         str=self._lastread
-        #for line in self._fh: # using `for`, self._fh.tell() returns a wrong value
+        #for line in self._stream: # using `for`, self._stream.tell() returns a wrong value
         while True:
-            line = self._fh.readline()
+            line = self._stream.readline()
             if line == "": # exit while loop when reaching EOF
                 self._lastread = "" # reach EOF
                 return jbosslogentry(str)
             if (self.match(line)): # if match boundary
                 self._lastread = line
                 return jbosslogentry(str)
-            self._position = self._fh.tell() # ここまで読んだ
+            self._position = self._stream.tell() # ここまで読んだ
             str = str+line
 
     def close(self):
-        self._fh.close()
+        self._stream.close()
 
 class jbosslogentry:
     def __init__(self, string):

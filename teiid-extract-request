@@ -3,7 +3,7 @@
 
 import sys
 import re
-from jbosslogutils import *
+import jbosslog.jbosslog
 
 from logging import *
 logger = getLogger(__name__)
@@ -38,7 +38,7 @@ if __name__ == "__main__":
         logger.error("file is missing")
         help()
 
-    log = jbosslog(filename=filename)
+    log = jbosslog(stream=open(filename,'r'))
 
     requestID_pattern = re.compile(r".*(\(.*\)).*[\s=]" + reqid + r"[\s;].*")
     start_pattern = re.compile(".*START USER COMMAND.*")
