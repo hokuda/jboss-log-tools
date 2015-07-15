@@ -49,16 +49,18 @@ def parse_start_user_command(entry):
     logger.debug("start dt=" + dt.strftime('%Y-%m-%d %H:%M:%S.%f'))
     return dt, reqid, sql
 
-def parse_end_user_command(entry, reqid):
-    start_user_command_pattern = re.compile(r".+END USER COMMAND:.+endTime=(\S+ \S+)\s+requestID=" + reqid + r"\s")
-    match = start_user_command_pattern.match(entry.string)
+end_user_command_pattern = re.compile(r".+END USER COMMAND:.+endTime=(\S+ \S+)\s+requestID=(\S+)\s")
+
+def parse_end_user_command(entry):
+    match = end_user_command_pattern.match(entry.string)
     if match == None:
-        return None
+        return None, None
     time = match.group(1)
+    reqid = match.group(2)
     #print "end time=" + time
     dt = datetime.datetime.strptime(time, '%Y-%m-%d %H:%M:%S.%f')
     #print "end dt=" + dt.strftime('%Y-%m-%d %H:%M:%S.%f')
-    return dt
+    return dt, reqid
 
 def parse_opts():
     parser = argparse.ArgumentParser(description='Process some integers.')
@@ -73,7 +75,6 @@ def parse_opts():
                            #type=argparse.FileType('r'),
                            help='Feed local log file')
     opts = parser.parse_args(sys.argv[1:])
-    print opts
     return opts
     
 
@@ -85,48 +86,36 @@ if __name__ == "__main__":
         sys.exit(0)
         
     threshold = opts.threshold
-    show_ongoing_query = threshold < 0
 
-    log1 = None
+    log = None
     if opts.splunk:
         from jbosssplunklib import splunkstream
-        log1 = jbosslog(stream=splunkstream())
+        log = jbosslog(stream=splunkstream())
     else:
-        log1 = jbosslog(stream=open(opts.local,'r'))
+        log = jbosslog(stream=open(opts.local,'r'))
 
-    while(log1.hasnext()):
-        next1 = log1.next()
-        (start, reqid, sql) = parse_start_user_command(next1)
-        if start == None:
+    running_commands = []
+    while(log.hasnext()):
+        next = log.next()
+        (start, reqid_s, sql) = parse_start_user_command(next)
+        if start != None:
+            running_commands.append([start, reqid_s, sql])
+            logger.debug("start start=" + start.strftime('%Y-%m-%d %H:%M:%S.%f'))
             continue
-        logger.debug("start start=" + start.strftime('%Y-%m-%d %H:%M:%S.%f'))
-        end = None
-        log2 = None
-        if opts.splunk:
-            log2 = jbosslog(stream=splunkstream())
-        else:
-            log2 = jbosslog(stream=open(opts.local,'r'))
-        while(log2.hasnext()):
-            next2 = log2.next()
-            end = parse_end_user_command(next2, reqid)
-            if end != None:
-                break
-        log2.close()
-        if(end == None):
-            #if (not show_not_found):
-                #pass
-            print >> sys.stderr, ">>> Not found endTime"
-            print >> sys.stderr, "request ID = " + reqid
-            print >> sys.stderr, "sql        = " + sql,
-            print >> sys.stderr, "start time = " + start.strftime('%Y-%m-%d %H:%M:%S.%f')
-            print >> sys.stderr, ""
-        else:
+
+        (end, reqid_e) = parse_end_user_command(next)
+
+        for (start, reqid_s, sql) in running_commands:
+            if reqid_s != reqid_e:
+                continue
             duration = end - start
             if duration.total_seconds() < threshold:
                 continue
             print ">>> duration in second = " + str(duration.total_seconds())
-            print "request ID = " + reqid
+            print "request ID = " + reqid_s
             print "sql        = " + sql,
             print "start time = " + start.strftime('%Y-%m-%d %H:%M:%S.%f')
             print "end time   = " + end.strftime('%Y-%m-%d %H:%M:%S.%f')
             print
+            running_commands.remove([start, reqid_s, sql])
+            

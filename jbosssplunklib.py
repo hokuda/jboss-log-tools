@@ -14,11 +14,19 @@ from utils import *
 # hokuda
 #from splunklib.results import *
 
+def loadrc():
+    parser = cmdopts.Parser()
+    parser.loadrc('.splunkrc')
+    return parser.result['kwargs']
+#return {'username':'admin', 'password':'password', 'host':'localhost', 'port':'8089'}
+
+    
 class splunkstream:
     """Input stream of Splunk log. Supports readline, tell, and seek methods"""
     def __init__(self):
         search = 'search * | sort _time'
-        service = client.connect(username='admin', password='password', host='localhost', port='8089')
+        rc = loadrc()
+        service = client.connect(**rc)
         job = service.jobs.create(search)
         while True:
             while not job.is_ready():
