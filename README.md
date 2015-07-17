@@ -99,3 +99,9 @@ Example:
 ##Installation
 
 Copy jboss-log-grep, jbosslogutils.py, teiid-extract-request, and teiid-query-duration to your bin directory.
+
+1. git clone https://github.com/hokuda/jboss-log-tools.git
+
+2. cd jboss-log-tools
+
+3. (optional) git clone https://github.com/splunk/splunk-sdk-python.git
