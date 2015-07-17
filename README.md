@@ -25,6 +25,8 @@ Tools for analysing JBoss AS/EAP log files.
 
 ##jboss-log-grep
 
+A command utility for grepping jboss server.log
+
 Usage:
 
         $ jboss-log-grep <pattern> <file>
@@ -40,6 +42,8 @@ Example:
 
 
 ##teiid-query-duration
+
+A command line utility for timing user command query and data source comand query
 
 Usage:
 
@@ -75,6 +79,8 @@ Example:
         end time   = 2014-11-20 17:01:28.409000
 
 ##teiid-extract-request
+
+A command utility for extracting log messages for a specific request command
 
 Usage:
 
