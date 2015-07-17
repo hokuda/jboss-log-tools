@@ -76,9 +76,9 @@ def parse_opts():
     exclusive = parser.add_mutually_exclusive_group()
     exclusive.add_argument('--splunk', action='store_true',
                            help='Use splunk to feed log.')
-    exclusive.add_argument('--local', metavar='<file>',
+    exclusive.add_argument('--local-file', '-f',  metavar='<file>',
                            #type=argparse.FileType('r'),
-                           help='Feed local log file. If neither --local and --splunk is not specified, teiid-query-duration feeds log from stdin.')
+                           help='Feed local log file. If neither --local-file and --splunk is not specified, teiid-query-duration feeds log from stdin.')
     opts = parser.parse_args(sys.argv[1:])
     return opts
 
@@ -94,7 +94,7 @@ def print_dur(start, end):
         print "source cmd ID = " + start['srcid']
     print "start time = " + start['time'].strftime('%Y-%m-%d %H:%M:%S.%f')
     print "end time   = " + end['time'].strftime('%Y-%m-%d %H:%M:%S.%f')
-    print "sql        = " + start['sql'],
+    print "sql        = " + start['sql']
     print
 
 
@@ -122,8 +122,8 @@ if __name__ == "__main__":
     if opts.splunk:
         from jbosssplunklib import splunkstream
         log = jbosslog(stream=splunkstream())
-    elif opts.local:
-        log = jbosslog(stream=open(opts.local,'r'))
+    elif opts.local_file:
+        log = jbosslog(stream=open(opts.local_file,'r'))
     else:
         log = jbosslog()
 
