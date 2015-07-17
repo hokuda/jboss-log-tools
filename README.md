@@ -100,8 +100,19 @@ Example:
 
 Copy jboss-log-grep, jbosslogutils.py, teiid-extract-request, and teiid-query-duration to your bin directory.
 
-1. git clone https://github.com/hokuda/jboss-log-tools.git
+1. git clone this repo.
 
-2. cd jboss-log-tools
+        git clone https://github.com/hokuda/jboss-log-tools.git
 
-3. (optional) git clone https://github.com/splunk/splunk-sdk-python.git
+2. change directory.
+
+        cd jboss-log-tools
+
+3. (optional) git clone Splunk SDK.
+
+        git clone https://github.com/splunk/splunk-sdk-python.git
+
+4. copy the files to your bin directory
+
+        cp -r * /path/to/your/bin/
+
