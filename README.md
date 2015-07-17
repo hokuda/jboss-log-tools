@@ -121,4 +121,4 @@ The [teiid-query-duration](#teiid-query-duration) command can feed log stored in
 
 1. Install Splunk SDK (See [Installation](#installation))
 
-2. Create ~/.splunkrc referring [this](https://github.com/splunk/splunk-sdk-python#splunkrc)
+2. Create ~/.splunkrc referring [example of .splunkrc](https://github.com/splunk/splunk-sdk-python#splunkrc)
