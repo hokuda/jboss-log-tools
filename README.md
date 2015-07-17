@@ -1,5 +1,3 @@
------------
-
 # jboss-log-tools
 
 Tools for analysing JBoss AS/EAP log files.
