@@ -46,7 +46,8 @@ Usage:
         teiid-query-duration [-h] [--threshold <sec>] [--src-command]
                             [--splunk | --local <file>]
 
-optional arguments:
+Optional arguments:
+
           -h, --help            show this help message and exit
           --threshold <sec>, -t <sec>
                                 Threshold of duration to be shown in second.
