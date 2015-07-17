@@ -42,10 +42,11 @@ class jbosslog:
         >>> #log = jbosslog(stream=None, boundary=r"2015-01-05 .* test regex")
         """
         if stream == None:
-            raise Exception("jbossutils: stream is None")
+            self._stream = sys_stdin_wrapper()
+        else:
+            self._stream = stream
         if boundary == None:
             raise Exception("jbossutils: boundary is None")
-        self._stream = stream
         #self._filename = open(filenname, 'r')
         self._position = self._stream.tell()
         self._lastread = self._stream.readline()
@@ -192,6 +193,24 @@ class jbosslogentry:
             return True
         else:
             return False
+
+class sys_stdin_wrapper:
+    """Wrapper of stdin to fake up tell and seek methods"""
+    def __init__(self):
+        pass
+
+    def readline(self):
+        return sys.stdin.readline()
+        
+    def close( self ):
+        pass
+
+    def tell(self):
+        return 0
+
+    def seek(self, offset, whence):
+        raise Exception('not supported')
+
 
 # test code
 if __name__ == '__main__':

@@ -15,7 +15,7 @@ from utils import *
 #from splunklib.results import *
 
 def loadrc():
-    parser = cmdopts.Parser()
+    parser = cmdopts.Parser(RULES_SPLUNK)
     parser.loadrc('.splunkrc')
     return parser.result['kwargs']
 #return {'username':'admin', 'password':'password', 'host':'localhost', 'port':'8089'}

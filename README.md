@@ -43,11 +43,23 @@ Example:
 
 Usage:
 
-        $ teiid-query-duration <threshold> <file>
+        teiid-query-duration [-h] [--threshold <sec>] [--src-command]
+                            [--splunk | --local <file>]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --threshold <sec>, -t <sec>
+                        Threshold of duration to be shown in second.
+  --src-command, -s     Show src command duration.
+  --splunk              Use splunk to feed log.
+  --local <file>        Feed local log file. If neither --local and --splunk
+                        is not specified, teiid-query-duration feeds log from
+                        stdin.
+
 
 Example:
 
-        [hokuda@localhost jboss-log-tools]$ ./teiid-query-duration 0 server.log 
+        [hokuda@localhost jboss-log-tools]$ ./teiid-query-duration --threshold 0 --local server.log 
         >>> duration in second = 0.047
         request ID = j5nPRpxMHbWt.0
         sql        = /*+ cache */ SELECT * FROM vvv.USERS

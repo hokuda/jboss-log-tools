@@ -1,121 +1,152 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+"""A command line utility for timing user command query and data source comand query"""
+
 import argparse
 import sys
 import re
 import datetime
 from jbosslog import jbosslog
 
-from logging import *
-logger = getLogger(__name__)
-handler = StreamHandler()
-formatter = Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-#logger.setLevel(DEBUG) # uncomment this line if you need debug output
-
-#start_user_command_pattern = re.compile(r".+START USER COMMAND:.+startTime=(\S+ \S+)\s+requestID=(\S+)\s+.*sql=([.\n]+)")
-start_user_command_pattern = re.compile(r".+START USER COMMAND:.+startTime=(\S+ \S+)\s+requestID=(\S+)\s+.*sql=(.+)", re.DOTALL)
-
-def parse_start_user_command(entry):
+def parse_start_command(entry):
     """
-    parse log entry which includes "START USER COMMAND" and return date+time, request ID, and SQL
+    parse log entry which includes "START (USER|DATA SRC) COMMAND"
+    and return date+time, request ID, and SQL (and sourceCommandID)
 
-    >>> import jbosslogutils
-    >>> entry = jbosslogentry("16:46:08,501 DEBUG [org.teiid.COMMAND_LOG] (New I/O worker #6)  START USER COMMAND:     startTime=2014-11-20 16:46:08.501       requestID=CYpbNi6727D+.0       txID=null       sessionID=CYpbNi6727D+  applicationName=JDBC    principal=user@teiid-security   vdbName=test  vdbVersion=1     sql=SELECT\\n"
+    >>> import jbosslog
+    >>> entry = jbosslog.jbosslogentry("16:46:08,501 DEBUG [org.teiid.COMMAND_LOG] (New I/O worker #6)  START USER COMMAND:     startTime=2014-11-20 16:46:08.501       requestID=CYpbNi6727D+.0       txID=null       sessionID=CYpbNi6727D+  applicationName=JDBC    principal=user@teiid-security   vdbName=test  vdbVersion=1     sql=SELECT\\n"
     ... + "    *\\n"
-    ... + "    FROM vvv.USERS\\n"
+    ... + "    FROM vvv.USERS\\n\\n"
     ... )
-    >>> (start, reqid, sql) = parse_start_user_command(entry)
-    >>> print start
+    >>> parsed = parse_start_command(entry)
+    >>> print parsed['time']
     2014-11-20 16:46:08.501000
-    >>> print reqid
+    >>> print parsed['reqid']
     CYpbNi6727D+.0
-    >>> print sql
+    >>> print parsed['sql']
     SELECT
         *
         FROM vvv.USERS
     <BLANKLINE>
     """
 
-    match = start_user_command_pattern.match(entry.string)
+    match = start_pattern.match(entry.string)
     if match == None:
-        return None, None, None
-    time = match.group(1)
+        return None
+    time  = datetime.datetime.strptime(match.group(1), '%Y-%m-%d %H:%M:%S.%f')
     reqid = match.group(2)
-    sql = match.group(3)
-    dt = datetime.datetime.strptime(time, '%Y-%m-%d %H:%M:%S.%f')
-    logger.debug("start dt=" + dt.strftime('%Y-%m-%d %H:%M:%S.%f'))
-    return dt, reqid, sql
+    srcid = match.group(3)
+    sql   = match.group(4)
+    return {'time':time, 'reqid':reqid, 'sql':sql, 'srcid':srcid}
 
-end_user_command_pattern = re.compile(r".+END USER COMMAND:.+endTime=(\S+ \S+)\s+requestID=(\S+)\s")
+end_pattern = None
 
-def parse_end_user_command(entry):
-    match = end_user_command_pattern.match(entry.string)
+def parse_end_command(entry):
+    """
+    parse log entry which includes "END (USER|SRC) COMMAND"
+    and return date+time, request ID (and sourceCommandID)
+
+    >>> import jbosslog
+    >>> entry = jbosslog.jbosslogentry("16:46:08,937 DEBUG [org.teiid.COMMAND_LOG] (Worker0_QueryProcessorQueue3)       END USER COMMAND:       endTime=2014-11-20 16:46:08.937 requestID=CYpbNi6727D+.0        txID=null       sessionID=CYpbNi6727D+  principal=user@teiid-security   vdbName=test    vdbVersion=1    finalRowCount=4"
+    ... )
+    >>> parsed = parse_end_command(entry)
+    >>> print parsed['time']
+    2014-11-20 16:46:08.937000
+    >>> print parsed['reqid']
+    CYpbNi6727D+.0
+    """
+
+    match = end_pattern.match(entry.string)
     if match == None:
-        return None, None
-    time = match.group(1)
+        return None
+    time  = datetime.datetime.strptime(match.group(1), '%Y-%m-%d %H:%M:%S.%f')
     reqid = match.group(2)
-    #print "end time=" + time
-    dt = datetime.datetime.strptime(time, '%Y-%m-%d %H:%M:%S.%f')
-    #print "end dt=" + dt.strftime('%Y-%m-%d %H:%M:%S.%f')
-    return dt, reqid
+    srcid = match.group(3)
+    return {'time':time, 'reqid':reqid, 'srcid':srcid}
 
 def parse_opts():
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='A command line utility for timing user command query and data source comand query')
     parser.add_argument('--threshold', '-t', metavar='<sec>',
-                        help='Threshold of duration in second', type=int,
+                        help='Threshold of duration to be shown in second.', type=int,
                         default=0)
+    parser.add_argument('--src-command', '-s', action='store_true',
+                        help='Show src command duration.')
     # exclusive input stream options
     exclusive = parser.add_mutually_exclusive_group()
     exclusive.add_argument('--splunk', action='store_true',
-                           help='Use splunk to feed log')
+                           help='Use splunk to feed log.')
     exclusive.add_argument('--local', metavar='<file>',
                            #type=argparse.FileType('r'),
-                           help='Feed local log file')
+                           help='Feed local log file. If neither --local and --splunk is not specified, teiid-query-duration feeds log from stdin.')
     opts = parser.parse_args(sys.argv[1:])
     return opts
-    
+
+
+def print_dur(start, end):
+    dur = end['time'] - start['time']
+    if dur.total_seconds() < opts.threshold:
+        return
+
+    print ">>> duration in second = " + str(dur.total_seconds())
+    print "request ID = " + start['reqid']
+    if start['srcid'] != '':
+        print "source cmd ID = " + start['srcid']
+    print "start time = " + start['time'].strftime('%Y-%m-%d %H:%M:%S.%f')
+    print "end time   = " + end['time'].strftime('%Y-%m-%d %H:%M:%S.%f')
+    print "sql        = " + start['sql'],
+    print
+
 
 if __name__ == "__main__":
-    opts = parse_opts()
-    if __file__ == "./test":
+    # a symbolic link named 'testme' to lead doctest
+    if __file__ == "./testme":
+        start_pattern = re.compile(r".+START USER COMMAND:.+startTime=(\S+ \S+)\s+requestID=(\S+)\s+()\s*.*sql=(.+)\s", re.DOTALL)
+        end_pattern = re.compile(r".+END USER COMMAND:.+endTime=(\S+ \S+)\s+requestID=(\S+)\s()")
         import doctest
         doctest.testmod()
         sys.exit(0)
-        
-    threshold = opts.threshold
 
-    log = None
+    opts = parse_opts()
+
+    if opts.src_command:
+        start_pattern = re.compile(r".+START DATA SRC COMMAND:.+startTime=(\S+ \S+)\s+requestID=(\S+)\s+sourceCommandID=(\S+)\s+.*sql=(.+)", re.DOTALL)
+    else:
+        start_pattern = re.compile(r".+START USER COMMAND:.+startTime=(\S+ \S+)\s+requestID=(\S+)\s+()\s*.*sql=(.+)\s", re.DOTALL)
+
+    if opts.src_command:
+        end_pattern = re.compile(r".+END SRC COMMAND:.+endTime=(\S+ \S+)\s+requestID=(\S+)\s+sourceCommandID=(\S+)\s")
+    else:
+        end_pattern = re.compile(r".+END USER COMMAND:.+endTime=(\S+ \S+)\s+requestID=(\S+)\s()")
+
     if opts.splunk:
         from jbosssplunklib import splunkstream
         log = jbosslog(stream=splunkstream())
-    else:
+    elif opts.local:
         log = jbosslog(stream=open(opts.local,'r'))
+    else:
+        log = jbosslog()
 
-    running_commands = []
+    commands = []
     while(log.hasnext()):
         next = log.next()
-        (start, reqid_s, sql) = parse_start_user_command(next)
+
+        start = parse_start_command(next)
         if start != None:
-            running_commands.append([start, reqid_s, sql])
-            logger.debug("start start=" + start.strftime('%Y-%m-%d %H:%M:%S.%f'))
+            commands.append(start)
             continue
 
-        (end, reqid_e) = parse_end_user_command(next)
+        end = parse_end_command(next)
+        if end == None:
+            continue
 
-        for (start, reqid_s, sql) in running_commands:
-            if reqid_s != reqid_e:
+        for start in commands:
+            if start['reqid'] != end['reqid']:
                 continue
-            duration = end - start
-            if duration.total_seconds() < threshold:
+
+            if opts.src_command and (start['srcid'] != end['srcid']):
                 continue
-            print ">>> duration in second = " + str(duration.total_seconds())
-            print "request ID = " + reqid_s
-            print "sql        = " + sql,
-            print "start time = " + start.strftime('%Y-%m-%d %H:%M:%S.%f')
-            print "end time   = " + end.strftime('%Y-%m-%d %H:%M:%S.%f')
-            print
-            running_commands.remove([start, reqid_s, sql])
-            
+
+            print_dur(start, end)
+            commands.remove(start)
+            break
