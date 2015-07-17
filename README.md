@@ -98,8 +98,6 @@ Example:
 
 ##Installation
 
-Copy jboss-log-grep, jbosslogutils.py, teiid-extract-request, and teiid-query-duration to your bin directory.
-
 1. git clone this repo.
 
         git clone https://github.com/hokuda/jboss-log-tools.git
@@ -116,3 +114,11 @@ Copy jboss-log-grep, jbosslogutils.py, teiid-extract-request, and teiid-query-du
 
         cp -r * /path/to/your/bin/
 
+
+###Splunk integration
+
+The [teiid-query-duration](#teiid-query-duration) command can feed log stored in Splunk server. To enable Splunk integration feature, you need:
+
+1. Install Splunk SDK (See [Installation](#installation))
+
+2. Create ~/.splunkrc referring [this](https://github.com/splunk/splunk-sdk-python#splunkrc)
