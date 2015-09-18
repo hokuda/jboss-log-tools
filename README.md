@@ -35,10 +35,10 @@ Optional arguments:
         --threshold <sec>, -t <sec>
                               Threshold of duration to be shown in second.
         --src-command, -s     Show src command duration.
-        --splunk              Use splunk to feed log.
+        --splunk              Use splunk to eat log.
         --local-file <file>, -f <file>
-                              Feed local log file. If neither --local-file and
-                              --splunk is not specified, teiid-query-duration feeds
+                              Eat local log file. If neither --local-file and
+                              --splunk is not specified, teiid-query-duration eats
                               log from stdin.
 
 
@@ -96,7 +96,7 @@ Example:
 
 ###Splunk integration
 
-The [teiid-query-duration](#teiid-query-duration) command can feed log stored in Splunk server. To enable Splunk integration feature, you need:
+The [teiid-query-duration](#teiid-query-duration) command can eat log stored in Splunk server. To enable Splunk integration feature, you need:
 
 1. Install Splunk SDK (See [Installation](#installation))
 

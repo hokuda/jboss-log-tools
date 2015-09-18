@@ -75,10 +75,10 @@ def parse_opts():
     # exclusive input stream options
     exclusive = parser.add_mutually_exclusive_group()
     exclusive.add_argument('--splunk', action='store_true',
-                           help='Use splunk to feed log.')
+                           help='Use splunk to eat log.')
     exclusive.add_argument('--local-file', '-f',  metavar='<file>',
                            #type=argparse.FileType('r'),
-                           help='Feed local log file. If neither --local-file and --splunk is not specified, teiid-query-duration feeds log from stdin.')
+                           help='Eat local log file. If neither --local-file and --splunk is not specified, teiid-query-duration eats log from stdin.')
     opts = parser.parse_args(sys.argv[1:])
     return opts
 
