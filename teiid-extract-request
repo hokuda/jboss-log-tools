@@ -43,8 +43,8 @@ if __name__ == "__main__":
     log = jbosslog(stream=open(filename,'r'))
 
     requestID_pattern = re.compile(r".*(\(.*\)).*[\s=]" + reqid + r"[\s;].*")
-    start_pattern = re.compile(".*START USER COMMAND.*")
-    end_pattern = re.compile(".*(END|ERROR|CANCEL) USER COMMAND.*")
+    start_pattern = re.compile(".*" + "((START USER COMMAND)|(Request Thread " + reqid + " with state NEW))" + ".*")
+    end_pattern = re.compile(".*" + "(((END|ERROR|CANCEL) USER COMMAND)|(" + reqid + " done processing WORKING))" + ".*")
 
     threads = []
     num = 0
