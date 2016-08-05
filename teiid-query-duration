@@ -60,10 +60,11 @@ def parse_end_command(entry):
     match = end_pattern.match(entry.string)
     if match == None:
         return None
-    time  = datetime.datetime.strptime(match.group(1), '%Y-%m-%d %H:%M:%S.%f')
-    reqid = match.group(2)
-    srcid = match.group(3)
-    return {'time':time, 'reqid':reqid, 'srcid':srcid}
+    stat  = match.group(1)
+    time  = datetime.datetime.strptime(match.group(2), '%Y-%m-%d %H:%M:%S.%f')
+    reqid = match.group(3)
+    srcid = match.group(4)
+    return {'time':time, 'reqid':reqid, 'srcid':srcid, 'stat':stat}
 
 def parse_opts():
     parser = argparse.ArgumentParser(description='A command line utility for timing user command query and data source comand query')
@@ -94,7 +95,8 @@ def print_dur(start, end):
         print "source cmd ID = " + start['srcid']
     print "start time = " + start['time'].strftime('%Y-%m-%d %H:%M:%S.%f')
     print "end time   = " + end['time'].strftime('%Y-%m-%d %H:%M:%S.%f')
-    print "sql        = " + start['sql']
+    print "sql        = " + start['sql'],
+    print "end stat   = " + end['stat']
     print
 
 
@@ -102,7 +104,7 @@ if __name__ == "__main__":
     # a symbolic link named 'testme' to lead doctest
     if __file__ == "./testme":
         start_pattern = re.compile(r".+START USER COMMAND:.+startTime=(\S+ \S+)\s+requestID=(\S+)\s+()\s*.*sql=(.+)\s", re.DOTALL)
-        end_pattern = re.compile(r".+END USER COMMAND:.+endTime=(\S+ \S+)\s+requestID=(\S+)\s()")
+        end_pattern = re.compile(r".+(END|ERROR|CANCEL) USER COMMAND:.+endTime=(\S+ \S+)\s+requestID=(\S+)\s()")
         import doctest
         doctest.testmod()
         sys.exit(0)
@@ -115,9 +117,9 @@ if __name__ == "__main__":
         start_pattern = re.compile(r".+START USER COMMAND:.+startTime=(\S+ \S+)\s+requestID=(\S+)\s+()\s*.*sql=(.+)\s", re.DOTALL)
 
     if opts.src_command:
-        end_pattern = re.compile(r".+END SRC COMMAND:.+endTime=(\S+ \S+)\s+requestID=(\S+)\s+sourceCommandID=(\S+)\s")
+        end_pattern = re.compile(r".+(END|ERROR|CANCEL) SRC COMMAND:.+endTime=(\S+ \S+)\s+requestID=(\S+)\s+sourceCommandID=(\S+)\s")
     else:
-        end_pattern = re.compile(r".+END USER COMMAND:.+endTime=(\S+ \S+)\s+requestID=(\S+)\s()")
+        end_pattern = re.compile(r".+(END|ERROR|CALCEL) USER COMMAND:.+endTime=(\S+ \S+)\s+requestID=(\S+)\s()")
 
     if opts.splunk:
         from jbosssplunklib import splunkstream
