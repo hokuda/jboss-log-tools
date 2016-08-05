@@ -119,7 +119,7 @@ if __name__ == "__main__":
     if opts.src_command:
         end_pattern = re.compile(r".+(END|ERROR|CANCEL) SRC COMMAND:.+endTime=(\S+ \S+)\s+requestID=(\S+)\s+sourceCommandID=(\S+)\s")
     else:
-        end_pattern = re.compile(r".+(END|ERROR|CALCEL) USER COMMAND:.+endTime=(\S+ \S+)\s+requestID=(\S+)\s()")
+        end_pattern = re.compile(r".+(END|ERROR|CANCEL) USER COMMAND:.+endTime=(\S+ \S+)\s+requestID=(\S+)\s()")
 
     if opts.splunk:
         from jbosssplunklib import splunkstream
