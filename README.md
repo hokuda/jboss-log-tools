@@ -2,7 +2,7 @@
 
 Tools for analysing JBoss AS/EAP log files.
 
-##jboss-log-grep
+## jboss-log-grep
 
 A command utility for grepping jboss server.log
 
@@ -20,14 +20,14 @@ Example:
                 4: [user3, password, hoge, null, null]
 
 
-##teiid-query-duration
+## teiid-query-duration
 
-A command line utility for timing user command query and data source comand query
+A command line utility for timing user command query and data source comand query. You need to set the log level `org.teiid.COMMAND_LOG` to `DEBUG` or `TRACE`
 
 Usage:
 
         teiid-query-duration [-h] [--threshold <sec>] [--src-command]
-                            [--splunk | --local <file>]
+                            [--splunk | --local-file <file>]
 
 Optional arguments:
 
@@ -44,7 +44,7 @@ Optional arguments:
 
 Example:
 
-        [hokuda@localhost jboss-log-tools]$ ./teiid-query-duration --threshold 0 --local server.log 
+        [hokuda@localhost jboss-log-tools]$ ./teiid-query-duration --threshold 0 -f server.log 
         >>> duration in second = 0.047
         request ID = j5nPRpxMHbWt.0
         sql        = /*+ cache */ SELECT * FROM vvv.USERS
@@ -57,7 +57,7 @@ Example:
         start time = 2014-11-20 17:01:28.363000
         end time   = 2014-11-20 17:01:28.409000
 
-##teiid-extract-request
+## teiid-extract-request
 
 A command utility for extracting log messages for a specific request command
 
@@ -75,7 +75,7 @@ Example:
         16:46:08,937 DEBUG [org.teiid.COMMAND_LOG] (Worker0_QueryProcessorQueue3) 	END USER COMMAND:	endTime=2014-11-20 16:46:08.937	requestID=CYpbNi6727D+.0	txID=null	sessionID=CYpbNi6727D+	principal=user@teiid-security	vdbName=test	vdbVersion=1	finalRowCount=4
 
 
-##Installation
+## Installation
 
 1. git clone this repo.
 
@@ -94,7 +94,7 @@ Example:
         cp -r * /path/to/your/bin/
 
 
-###Splunk integration
+### Splunk integration
 
 The [teiid-query-duration](#teiid-query-duration) command can eat log stored in Splunk server. To enable Splunk integration feature, you need:
 
