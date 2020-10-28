@@ -16,7 +16,7 @@ logger.addHandler(handler)
 #logger.setLevel(DEBUG) # uncomment this line if you need debug output
 
 def help():
-    print "Usage: " + __file__ +" <pattern> <file>",
+    print("Usage: " + __file__ +" <pattern> <file>", end=' ')
     sys.exit(0)
 
 if __name__ == '__main__':
@@ -48,8 +48,8 @@ if __name__ == '__main__':
         next = log.next()
         if(next.match(patternstring)):
             if output_to_tty:
-                print next.highlight,
+                print(next.highlight, end=' ')
             else:
-                print next.string,
+                print(next.string, end=' ')
             
 # eof
